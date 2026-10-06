@@ -143,7 +143,7 @@ TypeScript checks types separately with `tsc --noEmit`.
 Small configuration entrypoints live at the repository root so tools and editors
 can find them automatically. Shared rules live in
 [mstrict-actions/dev-tools](https://github.com/mstrict-actions/dev-tools),
-installed from the `0.3` Git tag over HTTPS. The lockfile pins the resolved
+installed from the `0.5` Git tag over HTTPS. The lockfile pins the resolved
 commit. Prettier uses the package reference in `package.json`; TypeScript
 extends its base config. The dev-tools package needs no build or registry
 publication. Update its version tag and lockfile to adopt a reviewed standard
@@ -192,3 +192,22 @@ changed. Tags created with `GITHUB_TOKEN` do not trigger another workflow run.
 ## License
 
 [MIT](LICENSE).
+
+## Agent-assisted development and security
+
+Start agent work with [AGENTS.md](AGENTS.md). Required skills are vendored in
+`.agents/skills/`; [provenance](.agents/README.md) records their source
+revisions and update procedure. The instructions distinguish this repository's
+checks from consumer and remote CI validation.
+
+External workflow Actions use full commit SHAs with release comments; Dependabot
+updates these pins weekly. Node type major updates require a runtime migration.
+CodeQL scans JavaScript/TypeScript and GitHub Actions workflows with the
+`security-and-quality` suite on pull requests, main pushes, a weekly schedule
+and manual dispatch. Tests, scripts and configurations remain in scope;
+generated artifacts and vendored skills are excluded. Autofix suggestions need
+review and validation. Repository security settings must also be enabled when
+creating a new repository from this template.
+
+The [development dependency assessment](docs/development-risks.md) documents
+remaining local-action advisories, exposure limits and recheck conditions.
