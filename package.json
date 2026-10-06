@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@github/local-action": "^7.0.1",
-    "@mstrict-actions/dev-tools": "git+https://github.com/mstrict-actions/dev-tools.git#eaf9e0c50e9a50b862a443f4bae69756296e1f22",
+    "@mstrict-actions/dev-tools": "git+https://github.com/mstrict-actions/dev-tools.git#0.3",
     "@types/node": "^24.19.1",
     "@vitest/coverage-v8": "^5.0.3",
     "esbuild": "^0.28.2",

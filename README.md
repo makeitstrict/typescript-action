@@ -143,14 +143,15 @@ TypeScript checks types separately with `tsc --noEmit`.
 Small configuration entrypoints live at the repository root so tools and editors
 can find them automatically. Shared rules live in
 [mstrict-actions/dev-tools](https://github.com/mstrict-actions/dev-tools),
-installed from a fixed Git commit over HTTPS. Prettier uses the package
-reference in `package.json`; TypeScript extends its base config. The dev-tools
-package needs no build or registry publication. Update its commit reference and
-lockfile to adopt a reviewed standard change. `tests/` contains unit and
-standalone bundle tests; `scripts/` contains the local-action launcher and the
-committed-bundle check. Configurations and the build script are plain ESM
-JavaScript. The launcher scripts use native Node TypeScript support. Type
-checking covers source, tests, scripts and JavaScript configurations.
+installed from the `0.3` Git tag over HTTPS. The lockfile pins the resolved
+commit. Prettier uses the package reference in `package.json`; TypeScript
+extends its base config. The dev-tools package needs no build or registry
+publication. Update its version tag and lockfile to adopt a reviewed standard
+change. `tests/` contains unit and standalone bundle tests; `scripts/` contains
+the local-action launcher and the committed-bundle check. Configurations and the
+build script are plain ESM JavaScript. The launcher scripts use native Node
+TypeScript support. Type checking covers source, tests, scripts and JavaScript
+configurations.
 
 Commit `dist/index.js` and its source map whenever source or runtime
 dependencies change. Consumers run the committed bundle without installing npm
