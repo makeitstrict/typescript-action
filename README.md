@@ -1,305 +1,194 @@
-# Create a GitHub Action Using TypeScript
+# TypeScript Action
 
-![Linter](https://github.com/actions/typescript-action/actions/workflows/linter.yml/badge.svg)
-![CI](https://github.com/actions/typescript-action/actions/workflows/ci.yml/badge.svg)
-![Check dist/](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml/badge.svg)
-![CodeQL](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml/badge.svg)
-![Coverage](./badges/coverage.svg)
+A minimal template for GitHub Actions with Node.js 24, TypeScript, esbuild,
+Vitest, ESLint and Prettier. npm manages dependencies and provides commands for
+local development and CI.
 
-Use this template to bootstrap the creation of a TypeScript action. :rocket:
+## Setup
 
-This template includes compilation support, tests, a validation workflow,
-publishing, and versioning guidance.
+Use Node.js 24.12 or newer within the 24.x release line and npm. CI selects Node
+24 explicitly. The devcontainer provides Node 24 and installs dependencies on
+creation. `.npmrc` enables `engine-strict`, so npm refuses unsupported Node
+versions.
 
-If you are new, there's also a simpler introduction in the
-[Hello world JavaScript action repository](https://github.com/actions/hello-world-javascript-action).
+```sh
+npm ci
+npm run check
+npm run build
+```
 
-## Create Your Own Action
+The action reads `name` (default: `World`), trims surrounding whitespace, logs
+`Hello, <name>!` and returns it as the `greeting` output. Empty names fail the
+step. GitHub supplies the default from `action.yml`; a direct process invocation
+must set `INPUT_NAME` itself.
 
-To create your own action, you can use this repository as a template! Just
-follow the below instructions:
+## Commands
 
-1. Click the **Use this template** button at the top of the repository
-1. Select **Create a new repository**
-1. Select an owner and name for your new repository
-1. Click **Create repository**
-1. Clone your new repository
+Run `npm run` for the command list.
 
-> [!IMPORTANT]
->
-> Make sure to remove or update the [`CODEOWNERS`](./CODEOWNERS) file! For
-> details on how to use this file, see
-> [About code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
+| Command                | Purpose                                       |
+| ---------------------- | --------------------------------------------- |
+| `npm ci`               | Install dependencies from the lockfile        |
+| `npm run format`       | Format files                                  |
+| `npm run format:check` | Check formatting                              |
+| `npm run lint`         | Run typed ESLint; warnings fail               |
+| `npm run lint:fix`     | Apply ESLint fixes explicitly                 |
+| `npm run typecheck`    | Check source, tests and configuration types   |
+| `npm test`             | Run Vitest                                    |
+| `npm run test:watch`   | Watch tests                                   |
+| `npm run coverage`     | Print coverage and write an LCOV report       |
+| `npm run build`        | Build the standalone action and source map    |
+| `npm run check`        | Check formatting, lint, types and tests       |
+| `npm run check:ci`     | Check formatting, lint, types and coverage    |
+| `npm run check-dist`   | Rebuild and compare dist with committed files |
+| `npm start`            | Run source with local-action                  |
+| `npm run debug`        | Start source with Node Inspector              |
 
-## Initial Setup
+`npm run check` stops at the first failing check without changing source.
+`npm run check:ci` runs the same checks with coverage instead of ordinary tests.
+`npm run build` writes only `dist/`. Coverage reports stay in the ignored
+`coverage/` directory. All source modules except the entrypoint must reach 100%
+statements, branches, functions and lines, including modules not imported by
+tests. The entrypoint is verified through standalone bundle tests. Scripts and
+configuration files are outside the coverage measurement.
 
-After you've cloned the repository to your local machine or codespace, you'll
-need to perform some initial setup steps before you can develop your action.
+## Code standard
 
-> [!NOTE]
->
-> You'll need to have a reasonably modern version of
-> [Node.js](https://nodejs.org) handy (20.x or later should work!). If you are
-> using a version manager like [`nodenv`](https://github.com/nodenv/nodenv) or
-> [`fnm`](https://github.com/Schniz/fnm), this template has a `.node-version`
-> file at the root of the repository that can be used to automatically switch to
-> the correct version when you `cd` into the repository. Additionally, this
-> `.node-version` file is used by GitHub Actions in any `actions/setup-node`
-> actions.
+TypeScript checks all source, tests, scripts and JS configurations with the same
+strict settings. Indexed access can return `undefined`; optional properties do
+not implicitly accept `undefined`; dictionary keys use bracket notation. Return
+paths, switch fallthrough, overrides, unreachable code and unused labels are
+checked as well.
 
-1. :hammer_and_wrench: Install the dependencies
+The GitHub-installed `@mstrict-actions/dev-tools` package supplies the common
+ESLint, Prettier, TypeScript and Vitest configurations. ESLint uses
+`strictTypeChecked` and `stylisticTypeChecked`, followed by the project rules
+and `eslint-config-prettier`. Every TypeScript function, including test and
+event callbacks, needs an explicit return type. JavaScript configs use JSDoc and
+`checkJs`. Conditions must be boolean. Promises must be awaited, returned or
+have an explicit rejection handler; `void` alone does not handle rejection.
+Async functions must perform async work. A switch over a union or enum must
+handle all variants or provide a default.
 
-   ```bash
-   npm install
-   ```
+Use `import type`, `const` where possible, and braces for control flow. Values
+use camelCase and types use PascalCase; external object keys and environment
+variable names retain their original spelling. Explicit `any` and unsafe use of
+`any` are errors. Ordinary type assertions and non-null assertions are
+forbidden; `as const` and `satisfies` are allowed.
 
-1. :building_construction: Package the TypeScript for distribution
+Formatting uses two spaces, single quotes, no semicolons, trailing commas in
+multiline constructs, an 80-column target, LF and wrapped Markdown prose.
+Prettier handles formatting separately from ESLint.
 
-   ```bash
-   npm run bundle
-   ```
+Rare local lint exceptions require a comment explaining the reason and review.
+Unused disable comments fail linting. Never disable the type-assertion or
+non-null-assertion bans, and do not use TypeScript suppression comments to
+bypass them. Tests follow the same rules; intentionally throwing a non-Error
+value is a documented, local exception for an error-handling test.
+Disable-comment policy is enforced through review, not an additional plugin.
 
-1. :white_check_mark: Run the tests
+Strict preset contents may change as typescript-eslint is updated. Review rule
+changes with dependency updates rather than weakening project rules to make a
+check pass. Compatible dependency ranges and the committed lockfile provide
+reproducible CI installs; keep Vitest and its coverage provider aligned when
+updating them.
 
-   ```bash
-   $ npm test
+## Local execution and debugging
 
-   PASS  ./index.test.js
-     ✓ throws invalid number (3ms)
-     ✓ wait 500 ms (504ms)
-     ✓ test runs (95ms)
+```sh
+cp .env.example .env
+npm start
+npm run debug
+```
 
-   ...
-   ```
+Edit `INPUT_NAME` in `.env`, or use `npm start -- /path/to/example.env`. Both
+commands run `src/main.ts` through the installed `@github/local-action`. An
+alternative env file also works with `npm run debug -- /path/to/example.env`, or
+by setting `ENV_FILE`. Missing env files produce setup instructions.
 
-## Update the Action Metadata
+`npm run debug` listens on `127.0.0.1:9229` and pauses before execution. Open
+`chrome://inspect` in Chrome, attach to the Node process, set a breakpoint in
+`src/main.ts`, and resume. No editor extension is required. Stop with Ctrl+C.
 
-The [`action.yml`](action.yml) file defines metadata about your action, such as
-input(s) and output(s). For details about this file, see
-[Metadata syntax for GitHub Actions](https://docs.github.com/en/actions/creating-actions/metadata-syntax-for-github-actions).
+local-action emulates the GitHub Actions Toolkit. Its current core emulation is
+based on core 2.x, while this action uses core 3.x. Tests also execute
+standalone bundles with the real toolkit and a temporary `GITHUB_OUTPUT` file.
 
-When you copy this repository, update `action.yml` with the name, description,
-inputs, and outputs for your action.
-
-## Update the Action Code
-
-The [`src/`](./src/) directory is the heart of your action! This contains the
-source code that will be run when your action is invoked. You can replace the
-contents of this directory with your own code.
-
-There are a few things to keep in mind when writing your action code:
-
-- Most GitHub Actions toolkit and CI/CD operations are processed asynchronously.
-  In `main.ts`, you will see that the action is run in an `async` function.
-
-  ```javascript
-  import * as core from '@actions/core'
-  //...
-
-  async function run() {
-    try {
-      //...
-    } catch (error) {
-      core.setFailed(error.message)
-    }
-  }
-  ```
-
-  For more information about the GitHub Actions toolkit, see the
-  [documentation](https://github.com/actions/toolkit/blob/main/README.md).
-
-So, what are you waiting for? Go ahead and start customizing your action!
-
-1. Create a new branch
-
-   ```bash
-   git checkout -b releases/v1
-   ```
-
-1. Replace the contents of `src/` with your action code
-1. Add tests to `__tests__/` for your source code
-1. Format, test, and build the action
-
-   ```bash
-   npm run all
-   ```
-
-   > This step is important! It will run [`rollup`](https://rollupjs.org/) to
-   > build the final JavaScript action code with all dependencies included. If
-   > you do not run this step, your action will not work correctly when it is
-   > used in a workflow.
-
-1. (Optional) Test your action locally
-
-   The [`@github/local-action`](https://github.com/github/local-action) utility
-   can be used to test your action locally. It is a simple command-line tool
-   that "stubs" (or simulates) the GitHub Actions Toolkit. This way, you can run
-   your TypeScript action locally without having to commit and push your changes
-   to a repository.
-
-   The `local-action` utility can be run in the following ways:
-   - Visual Studio Code Debugger
-
-     Make sure to review and, if needed, update
-     [`.vscode/launch.json`](./.vscode/launch.json)
-
-   - Terminal/Command Prompt
-
-     ```bash
-     # npx @github/local action <action-yaml-path> <entrypoint> <dotenv-file>
-     npx @github/local-action . src/main.ts .env
-     ```
-
-   You can provide a `.env` file to the `local-action` CLI to set environment
-   variables used by the GitHub Actions Toolkit. For example, setting inputs and
-   event payload data used by your action. For more information, see the example
-   file, [`.env.example`](./.env.example), and the
-   [GitHub Actions Documentation](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables).
-
-1. Commit your changes
-
-   ```bash
-   git add .
-   git commit -m "My first action is ready!"
-   ```
-
-1. Push them to your repository
-
-   ```bash
-   git push -u origin releases/v1
-   ```
-
-1. Create a pull request and get feedback on your action
-1. Merge the pull request into the `main` branch
-
-Your action is now published! :rocket:
-
-For information about versioning your action, see
-[Versioning](https://github.com/actions/toolkit/blob/main/docs/action-versioning.md)
-in the GitHub Actions toolkit.
-
-## Validate the Action
-
-You can now validate the action by referencing it in a workflow file. For
-example, [`ci.yml`](./.github/workflows/ci.yml) demonstrates how to reference an
-action in the same repository.
+## Use the action
 
 ```yaml
 steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v4
-
-  - name: Test Local Action
-    id: test-action
-    uses: ./
+  - uses: makeitstrict/typescript-action@v1
+    id: greeting
     with:
-      milliseconds: 1000
-
-  - name: Print Output
-    id: output
-    run: echo "${{ steps.test-action.outputs.time }}"
+      name: Ada
+  - name: Print greeting
+    env:
+      GREETING: ${{ steps.greeting.outputs.greeting }}
+    run: printf '%s\n' "$GREETING"
 ```
 
-For example workflow runs, check out the
-[Actions tab](https://github.com/actions/typescript-action/actions)! :rocket:
+The `@v1` reference is an example for a published release. Until a release
+exists, use a commit SHA that contains the built action. When you copy this
+template, update the package metadata, action author and usage reference for
+your repository.
 
-## Usage
+## Build and CI
 
-After testing, you can create version tag(s) that developers can use to
-reference different stable versions of your action. For more information, see
-[Versioning](https://github.com/actions/toolkit/blob/main/docs/action-versioning.md)
-in the GitHub Actions toolkit.
+`src/index.ts` invokes the exported synchronous `run(): void` function in
+`src/main.ts`. esbuild bundles source and runtime dependencies into
+`dist/index.js`, targeting Node 24 ESM. Node built-ins remain external.
+TypeScript checks types separately with `tsc --noEmit`.
 
-To include the action in a workflow in another repository, you can use the
-`uses` syntax with the `@` symbol to reference a specific branch, tag, or commit
-hash.
+Small configuration entrypoints live at the repository root so tools and editors
+can find them automatically. Shared rules live in
+[mstrict-actions/dev-tools](https://github.com/mstrict-actions/dev-tools),
+installed from a fixed Git commit over HTTPS. Prettier uses the package
+reference in `package.json`; TypeScript extends its base config. The dev-tools
+package needs no build or registry publication. Update its commit reference and
+lockfile to adopt a reviewed standard change. `tests/` contains unit and
+standalone bundle tests; `scripts/` contains the local-action launcher and the
+committed-bundle check. Configurations and the build script are plain ESM
+JavaScript. The launcher scripts use native Node TypeScript support. Type
+checking covers source, tests, scripts and JavaScript configurations.
 
-```yaml
-steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v4
+Commit `dist/index.js` and its source map whenever source or runtime
+dependencies change. Consumers run the committed bundle without installing npm
+dependencies. Tests run both a fresh isolated bundle and the committed bundle
+without access to this repository's `node_modules`.
 
-  - name: Test Local Action
-    id: test-action
-    uses: actions/typescript-action@v1 # Commit with the `v1` tag
-    with:
-      milliseconds: 1000
-
-  - name: Print Output
-    id: output
-    run: echo "${{ steps.test-action.outputs.time }}"
+```sh
+npm run check
+npm run build
+# Review and commit source, package-lock.json and dist/ together.
+npm run check-dist
 ```
 
-## Publishing a New Release
+`npm run check-dist` compares with the Git commit, so it fails until updated
+dist files are committed. It detects modified, deleted and new files, including
+staged files.
 
-This project includes a helper script, [`script/release`](./script/release)
-designed to streamline the process of tagging and pushing new releases for
-GitHub Actions.
+CI runs `npm run check:ci` and has separate source-check, dist-check and action
+smoke-test jobs. The smoke test checks both an explicit name and the metadata
+default. CodeQL runs separately; Dependabot checks npm and GitHub Actions
+weekly. Dependencies use stable compatible versions. TypeScript currently stays
+on 6.0.x to match typescript-eslint support.
 
-GitHub Actions allows users to select a specific version of the action to use,
-based on release tags. This script simplifies this process by performing the
-following steps:
+## Release
 
-1. **Retrieving the latest release tag:** The script starts by fetching the most
-   recent SemVer release tag of the current branch, by looking at the local data
-   available in your repository.
-1. **Prompting for a new release tag:** The user is then prompted to enter a new
-   release tag. To assist with this, the script displays the tag retrieved in
-   the previous step, and validates the format of the inputted tag (vX.X.X). The
-   user is also reminded to update the version field in package.json.
-1. **Tagging the new release:** The script then tags a new release and syncs the
-   separate major tag (e.g. v1, v2) with the new release tag (e.g. v1.0.0,
-   v2.1.2). When the user is creating a new major release, the script
-   auto-detects this and creates a `releases/v#` branch for the previous major
-   version.
-1. **Pushing changes to remote:** Finally, the script pushes the necessary
-   commits, tags and branches to the remote repository. From here, you will need
-   to create a new release in GitHub so users can easily reference the new tags
-   in their workflows.
+After CI passes for the commit containing the current `dist/`, update the
+version in `package.json` and its lockfile, commit it, and create a version tag:
 
-## Dependency License Management
-
-This template includes a GitHub Actions workflow,
-[`licensed.yml`](./.github/workflows/licensed.yml), that uses
-[Licensed](https://github.com/licensee/licensed) to check for dependencies with
-missing or non-compliant licenses. This workflow is initially disabled. To
-enable the workflow, follow the below steps.
-
-1. Open [`licensed.yml`](./.github/workflows/licensed.yml)
-1. Uncomment the following lines:
-
-   ```yaml
-   # pull_request:
-   #   branches:
-   #     - main
-   # push:
-   #   branches:
-   #     - main
-   ```
-
-1. Save and commit the changes
-
-Once complete, this workflow will run any time a pull request is created or
-changes pushed directly to `main`. If the workflow detects any dependencies with
-missing or non-compliant licenses, it will fail the workflow and provide details
-on the issue(s) found.
-
-### Updating Licenses
-
-Whenever you install or update dependencies, you can use the Licensed CLI to
-update the licenses database. To install Licensed, see the project's
-[Readme](https://github.com/licensee/licensed?tab=readme-ov-file#installation).
-
-To update the cached licenses, run the following command:
-
-```bash
-licensed cache
+```sh
+git tag -a v1.0.0 -m 'v1.0.0'
+git push origin v1.0.0
 ```
 
-To check the status of cached licenses, run the following command:
+For the first release, create and push a matching major tag (`v1`). For
+subsequent releases, move that major tag to the tested release commit and
+explicitly push its update. Create a GitHub release for the version tag. These
+are manual publishing steps; development commands do not publish or push.
 
-```bash
-licensed status
-```
+## License
+
+[MIT](LICENSE).

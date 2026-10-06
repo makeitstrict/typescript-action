@@ -1,24 +1,17 @@
-name: The name of your action here
-description: Provide a description here
-author: Your name or organization here
-
-# Add your action's branding here. This will appear on the GitHub Marketplace.
+name: TypeScript Greeting
+description: A minimal TypeScript action that greets a name.
+author: makeitstrict
 branding:
-  icon: heart
-  color: red
-
-# Define your inputs here.
+  icon: message-circle
+  color: blue
 inputs:
-  milliseconds:
-    description: Your input description here
+  name:
+    description: The name to greet.
     required: true
-    default: '1000'
-
-# Define your outputs here.
+    default: World
 outputs:
-  time:
-    description: Your output description here
-
+  greeting:
+    description: The greeting message.
 runs:
   using: node24
   main: dist/index.js
