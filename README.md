@@ -8,8 +8,9 @@ local development and CI.
 
 Use Node.js 24.12 or newer within the 24.x release line and npm. CI selects Node
 24 explicitly. The devcontainer provides Node 24 and installs dependencies on
-creation. `.npmrc` enables `engine-strict`, so npm refuses unsupported Node
-versions.
+creation. Its per-container `node_modules` volume keeps Linux packages separate
+from host dependencies. Port 9229 is forwarded for the Node Inspector. `.npmrc`
+enables `engine-strict`, so npm refuses unsupported Node versions.
 
 ```sh
 npm ci
@@ -118,7 +119,7 @@ standalone bundles with the real toolkit and a temporary `GITHUB_OUTPUT` file.
 
 ```yaml
 steps:
-  - uses: makeitstrict/typescript-action@v1
+  - uses: makeitstrict/typescript-action@0.3
     id: greeting
     with:
       name: Ada
@@ -128,10 +129,9 @@ steps:
     run: printf '%s\n' "$GREETING"
 ```
 
-The `@v1` reference is an example for a published release. Until a release
-exists, use a commit SHA that contains the built action. When you copy this
-template, update the package metadata, action author and usage reference for
-your repository.
+Select an existing `0.N` tag or a commit SHA that contains the built action.
+When you copy this template, update the package metadata, action author and
+usage reference for your repository.
 
 ## Build and CI
 
@@ -174,20 +174,19 @@ default. CodeQL runs separately; Dependabot checks npm and GitHub Actions
 weekly. Dependencies use stable compatible versions. TypeScript currently stays
 on 6.0.x to match typescript-eslint support.
 
-## Release
+## Version tags
 
-After CI passes for the commit containing the current `dist/`, update the
-version in `package.json` and its lockfile, commit it, and create a version tag:
+Every push to `main` runs the Version workflow and tags the pushed tip commit as
+`0.N`, without a `v` prefix. `N` is the number of commits reachable from that
+commit (`git rev-list --count`), including merged history. The workflow fetches
+full history so the count does not depend on a shallow checkout. A push with
+several commits tags its tip; existing history is not tagged retroactively.
 
-```sh
-git tag -a v1.0.0 -m 'v1.0.0'
-git push origin v1.0.0
-```
-
-For the first release, create and push a matching major tag (`v1`). For
-subsequent releases, move that major tag to the tested release commit and
-explicitly push its update. Create a GitHub release for the version tag. These
-are manual publishing steps; development commands do not publish or push.
+Rerunning the workflow succeeds when the tag already points to the same commit.
+A conflicting tag fails the workflow and is never moved. Keep `main` history
+append-only so version numbers remain meaningful. Versioning runs independently
+of CI; check CI before using a tag. Package versions and GitHub Releases are not
+changed. Tags created with `GITHUB_TOKEN` do not trigger another workflow run.
 
 ## License
 
